@@ -1,0 +1,505 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>年会评分 · 管理后台</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Microsoft YaHei', sans-serif;
+      background: #111827;
+      color: #e5e7eb;
+      min-height: 100vh;
+      padding: 20px 16px 60px;
+    }
+    h1 { font-size: 20px; color: #FFD700; margin-bottom: 6px; }
+    .page-sub { font-size: 13px; color: #6b7280; margin-bottom: 24px; }
+
+    .section {
+      background: #1f2937;
+      border: 1px solid #374151;
+      border-radius: 14px;
+      padding: 20px;
+      margin-bottom: 20px;
+    }
+    .section h2 { font-size: 15px; color: #9ca3af; margin-bottom: 16px; display: flex; align-items: center; gap: 8px; }
+
+    label { display: block; font-size: 13px; color: #9ca3af; margin-bottom: 6px; margin-top: 12px; }
+    label:first-of-type { margin-top: 0; }
+    input[type=text], input[type=password] {
+      width: 100%;
+      padding: 10px 12px;
+      background: #111827;
+      border: 1px solid #374151;
+      border-radius: 8px;
+      color: #e5e7eb;
+      font-size: 14px;
+      outline: none;
+    }
+    input:focus { border-color: #FFD700; }
+
+    .help-link {
+      font-size: 12px;
+      color: #60a5fa;
+      text-decoration: underline;
+      margin-top: 6px;
+      display: inline-block;
+    }
+
+    /* 节目列表 */
+    .program-item {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      margin-bottom: 10px;
+    }
+    .program-item input { flex: 1; }
+    .program-item select {
+      flex: 0 0 120px;
+      padding: 10px 8px;
+      background: #111827;
+      border: 1px solid #374151;
+      border-radius: 8px;
+      color: #e5e7eb;
+      font-size: 13px;
+      outline: none;
+      cursor: pointer;
+    }
+    .program-item select:focus { border-color: #FFD700; }
+    .del-btn {
+      width: 32px; height: 32px;
+      background: #ef4444;
+      border: none; border-radius: 8px;
+      color: white; cursor: pointer; font-size: 16px;
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+    }
+
+    .add-btn {
+      width: 100%;
+      padding: 10px;
+      background: rgba(255,215,0,0.1);
+      border: 1px dashed rgba(255,215,0,0.4);
+      border-radius: 8px;
+      color: #FFD700;
+      cursor: pointer;
+      font-size: 14px;
+      margin-top: 4px;
+    }
+
+    /* 按钮 */
+    .btn {
+      padding: 12px 20px;
+      border: none;
+      border-radius: 10px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      width: 100%;
+      margin-top: 12px;
+    }
+    .btn-primary { background: linear-gradient(135deg, #FFD700, #FFA500); color: #111827; }
+    .btn-success { background: #22c55e; color: white; }
+    .btn-danger { background: #ef4444; color: white; }
+    .btn-secondary { background: #374151; color: #e5e7eb; }
+    .btn-gist {
+      background: #238636;
+      color: white;
+    }
+
+    .msg {
+      padding: 10px 14px;
+      border-radius: 8px;
+      font-size: 13px;
+      margin-top: 10px;
+      display: none;
+    }
+    .msg.success { background: rgba(34,197,94,0.15); border: 1px solid rgba(34,197,94,0.3); color: #4ade80; display: block; }
+    .msg.error { background: rgba(239,68,68,0.15); border: 1px solid rgba(239,68,68,0.3); color: #f87171; display: block; }
+    .msg.info { background: rgba(59,130,246,0.15); border: 1px solid rgba(59,130,246,0.3); color: #60a5fa; display: block; }
+
+    .nav-links { display: flex; gap: 10px; margin-top: 16px; }
+    .nav-links a {
+      flex: 1;
+      padding: 12px;
+      background: #1f2937;
+      border: 1px solid #374151;
+      border-radius: 10px;
+      text-align: center;
+      color: #9ca3af;
+      text-decoration: none;
+      font-size: 13px;
+    }
+
+    .warn-box {
+      background: rgba(239,68,68,0.1);
+      border: 1px solid rgba(239,68,68,0.3);
+      border-radius: 8px;
+      padding: 10px 14px;
+      font-size: 13px;
+      color: #f87171;
+      margin-bottom: 12px;
+    }
+
+    #loginOverlay {
+      position: fixed; inset: 0;
+      background: #111827;
+      z-index: 100;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
+      padding: 30px;
+    }
+    #loginOverlay h2 { color: #FFD700; margin-bottom: 20px; font-size: 20px; }
+    #loginOverlay input {
+      width: 100%;
+      max-width: 300px;
+      padding: 12px;
+      background: #1f2937;
+      border: 1px solid #374151;
+      border-radius: 10px;
+      color: white;
+      font-size: 16px;
+      text-align: center;
+      letter-spacing: 4px;
+    }
+    #loginOverlay button {
+      margin-top: 14px;
+      width: 100%;
+      max-width: 300px;
+      padding: 13px;
+      background: linear-gradient(135deg, #FFD700, #FFA500);
+      border: none;
+      border-radius: 10px;
+      font-size: 16px;
+      font-weight: 700;
+      color: #111827;
+      cursor: pointer;
+    }
+    #loginErr { color: #f87171; font-size: 13px; margin-top: 8px; min-height: 20px; }
+  </style>
+</head>
+<body>
+
+<div id="loginOverlay">
+  <h2>🔒 管理员登录</h2>
+  <input type="password" id="pwdInput" placeholder="输入管理密码" onkeydown="if(event.key==='Enter') checkPwd()">
+  <button onclick="checkPwd()">进入管理后台</button>
+  <div id="loginErr"></div>
+</div>
+
+<h1>⚙️ 管理后台</h1>
+<div class="page-sub">配置节目列表与系统设置</div>
+
+<!-- GitHub Gist 配置 -->
+<div class="section">
+  <h2>🐙 GitHub Gist 配置</h2>
+  <label>GitHub Personal Access Token（需要 gist 权限）</label>
+  <input type="password" id="cfgToken" placeholder="ghp_xxxxxxxxxxxxxxxxxxxx">
+  <a class="help-link" href="https://github.com/settings/tokens/new?scopes=gist&description=AnnualParty2026" target="_blank">
+    → 点击这里快速创建 Token（需登录 GitHub）
+  </a>
+  <label style="margin-top:12px">Gist ID（创建后会自动填入，也可手动填写已有 Gist）</label>
+  <input type="text" id="cfgGistId" placeholder="创建 Gist 后会自动填入">
+  <button class="btn btn-gist" onclick="createNewGist()">🐙 创建新 Gist 数据存储</button>
+  <button class="btn btn-primary" onclick="saveConfig()">💾 保存配置到本地</button>
+  <div id="cfgMsg" class="msg"></div>
+</div>
+
+<!-- 节目配置 -->
+<div class="section">
+  <h2>🎭 节目列表</h2>
+  <div id="programItems"></div>
+  <button class="add-btn" onclick="addProgram()">＋ 添加节目</button>
+  <button class="btn btn-primary" onclick="savePrograms()">💾 保存节目列表</button>
+  <div id="progMsg" class="msg"></div>
+</div>
+
+<!-- 数据预览 -->
+<div class="section">
+  <h2>📊 投票数据预览</h2>
+  <div id="dataPreview" style="font-size:13px; color:#9ca3af; background:#111827; border-radius:8px; padding:12px; max-height:200px; overflow:auto; white-space:pre-wrap; display:none"></div>
+  <button class="btn btn-secondary" onclick="loadAndShowData()">👁️ 查看投票数据</button>
+  <div id="dataMsg" class="msg" style="margin-top:8px"></div>
+</div>
+
+<!-- 危险操作 -->
+<div class="section">
+  <h2>⚠️ 危险操作</h2>
+  <div class="warn-box">以下操作不可撤销，请谨慎操作！</div>
+  <button class="btn btn-danger" onclick="resetScores()">🗑️ 清空所有投票数据</button>
+  <button class="btn btn-danger" onclick="resetVoted()" style="margin-top:8px">🔄 解除本机已投票限制</button>
+  <div id="dangerMsg" class="msg"></div>
+</div>
+
+<div class="nav-links">
+  <a href="index.html">📱 投票页面</a>
+  <a href="board.html">🏆 排行榜</a>
+</div>
+
+<script>
+const ADMIN_PWD = '2026';
+const GIST_FILE = 'annual-party-data.json';
+
+function checkPwd() {
+  const val = document.getElementById('pwdInput').value;
+  if (val === ADMIN_PWD) {
+    document.getElementById('loginOverlay').style.display = 'none';
+    initPage();
+  } else {
+    document.getElementById('loginErr').textContent = '密码错误，请重试';
+    document.getElementById('pwdInput').value = '';
+  }
+}
+
+function getConfig() {
+  return {
+    token: localStorage.getItem('github_token') || '',
+    gistId: localStorage.getItem('gist_id') || ''
+  };
+}
+
+function ghHeaders() {
+  return {
+    'Accept': 'application/vnd.github+json',
+    'Authorization': `Bearer ${getConfig().token}`,
+    'X-GitHub-Api-Version': '2022-11-28',
+    'Content-Type': 'application/json'
+  };
+}
+
+function saveConfig() {
+  const token = document.getElementById('cfgToken').value.trim();
+  const gistId = document.getElementById('cfgGistId').value.trim();
+  localStorage.setItem('github_token', token);
+  localStorage.setItem('gist_id', gistId);
+  showMsg('cfgMsg', 'success', '✅ 配置已保存到本地');
+}
+
+async function createNewGist() {
+  const token = document.getElementById('cfgToken').value.trim();
+  if (!token) {
+    showMsg('cfgMsg', 'error', '❌ 请先填写 GitHub Token');
+    return;
+  }
+  showMsg('cfgMsg', 'info', '⏳ 正在创建 Gist...');
+  try {
+    const res = await fetch('https://api.github.com/gists', {
+      method: 'POST',
+      headers: {
+        'Accept': 'application/vnd.github+json',
+        'Authorization': `Bearer ${token}`,
+        'X-GitHub-Api-Version': '2022-11-28',
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        description: '🎭 年会节目评分系统数据存储',
+        public: false,
+        files: {
+          [GIST_FILE]: {
+            content: JSON.stringify({ programs: programList, scores: {} }, null, 2)
+          }
+        }
+      })
+    });
+    if (!res.ok) {
+      const err = await res.json();
+      throw new Error(err.message || '创建失败');
+    }
+    const json = await res.json();
+    document.getElementById('cfgGistId').value = json.id;
+    localStorage.setItem('github_token', token);
+    localStorage.setItem('gist_id', json.id);
+    showMsg('cfgMsg', 'success', `✅ Gist 创建成功！ID: ${json.id}`);
+  } catch(e) {
+    showMsg('cfgMsg', 'error', `❌ 创建失败：${e.message}`);
+  }
+}
+
+// ====== 节目列表 ======
+const PROGRAM_TYPES = [
+  '歌唱', '舞蹈', '歌舞', '相声', '小品', '相声小品',
+  '才艺展示', '乐器', '朗诵', '情景剧', '魔术', '武术', '其他'
+];
+
+let programList = [
+  { id: 1, name: '节目一', type: '歌舞' },
+  { id: 2, name: '节目二', type: '相声小品' },
+  { id: 3, name: '节目三', type: '才艺展示' },
+  { id: 4, name: '节目四', type: '歌唱' },
+  { id: 5, name: '节目五', type: '舞蹈' },
+];
+
+function typeOptions(selected) {
+  return PROGRAM_TYPES.map(t =>
+    `<option value="${t}" ${t === selected ? 'selected' : ''}>${t}</option>`
+  ).join('');
+}
+
+function renderProgramItems() {
+  const container = document.getElementById('programItems');
+  container.innerHTML = programList.map((p, i) => `
+    <div class="program-item">
+      <input type="text" value="${p.name}" placeholder="节目名称" onchange="programList[${i}].name=this.value">
+      <select onchange="programList[${i}].type=this.value">
+        ${typeOptions(p.type)}
+      </select>
+      <button class="del-btn" onclick="removeProgram(${i})">×</button>
+    </div>
+  `).join('');
+}
+
+function addProgram() {
+  const newId = programList.length > 0 ? Math.max(...programList.map(p => p.id)) + 1 : 1;
+  programList.push({ id: newId, name: '新节目', type: '歌唱' });
+  renderProgramItems();
+}
+
+function removeProgram(idx) {
+  if (programList.length <= 1) { alert('至少保留一个节目'); return; }
+  programList.splice(idx, 1);
+  programList.forEach((p, i) => p.id = i + 1);
+  renderProgramItems();
+}
+
+async function savePrograms() {
+  document.querySelectorAll('.program-item').forEach((item, i) => {
+    const nameInput = item.querySelector('input');
+    const typeSelect = item.querySelector('select');
+    if (programList[i]) {
+      programList[i].name = nameInput.value;
+      programList[i].type = typeSelect.value;
+    }
+  });
+
+  const cfg = getConfig();
+  if (!cfg.token || !cfg.gistId) {
+    showMsg('progMsg', 'error', '❌ 请先配置 GitHub Token 和 Gist（创建或填写）');
+    return;
+  }
+
+  showMsg('progMsg', 'success', '保存中...');
+  try {
+    // 直接获取 Gist，从响应中拿到文件的 SHA
+    const res = await fetch(`https://api.github.com/gists/${cfg.gistId}`, {
+      method: 'GET',
+      headers: ghHeaders()
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.message || `HTTP ${res.status}`);
+    }
+    const gist = await res.json();
+
+    // 获取当前文件的 SHA（更新时必须提供）
+    let sha = null;
+    if (gist.files && gist.files[GIST_FILE]) {
+      sha = gist.files[GIST_FILE].sha;
+    }
+
+    const fileContent = { programs: programList, scores: {} };
+    const files = {};
+    files[GIST_FILE] = { content: JSON.stringify(fileContent, null, 2) };
+    if (sha) files[GIST_FILE].sha = sha;
+
+    const patchRes = await fetch(`https://api.github.com/gists/${cfg.gistId}`, {
+      method: 'PATCH',
+      headers: ghHeaders(),
+      body: JSON.stringify({ files })
+    });
+    if (!patchRes.ok) {
+      const err = await patchRes.json().catch(() => ({}));
+      throw new Error(err.message || `HTTP ${patchRes.status}`);
+    }
+    showMsg('progMsg', 'success', '✅ 节目列表已保存到 Gist');
+  } catch(e) {
+    showMsg('progMsg', 'error', `❌ 保存失败：${e.message}`);
+  }
+}
+
+async function loadAndShowData() {
+  const cfg = getConfig();
+  if (!cfg.token || !cfg.gistId) {
+    showMsg('dataMsg', 'error', '❌ 请先配置 Gist');
+    return;
+  }
+  try {
+    const res = await fetch(`https://api.github.com/gists/${cfg.gistId}`, {
+      headers: ghHeaders()
+    });
+    if (!res.ok) throw new Error('读取失败');
+    const gist = await res.json();
+    const content = gist.files[GIST_FILE]?.content || '{}';
+    const data = JSON.parse(content);
+    document.getElementById('dataPreview').textContent = JSON.stringify(data, null, 2);
+    document.getElementById('dataPreview').style.display = 'block';
+
+    // 同步节目列表到本地
+    if (data.programs && data.programs.length > 0) {
+      programList = data.programs;
+      renderProgramItems();
+      showMsg('dataMsg', 'info', `📊 已加载数据：${data.programs.length} 个节目，${Object.keys(data.scores || {}).length} 个节目有投票`);
+    }
+  } catch(e) {
+    showMsg('dataMsg', 'error', `❌ 读取失败：${e.message}`);
+  }
+}
+
+async function resetScores() {
+  if (!confirm('确定要清空所有投票数据吗？此操作不可恢复！')) return;
+  const cfg = getConfig();
+  if (!cfg.token || !cfg.gistId) {
+    showMsg('dangerMsg', 'error', '❌ 请先配置 Gist');
+    return;
+  }
+  try {
+    const res = await fetch(`https://api.github.com/gists/${cfg.gistId}`, {
+      headers: ghHeaders()
+    });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const gist = await res.json();
+
+    const data = JSON.parse(gist.files[GIST_FILE]?.content || '{}');
+    data.scores = {};
+    if (!data.programs) data.programs = programList;
+
+    const files = {};
+    files[GIST_FILE] = {
+      content: JSON.stringify(data, null, 2),
+      sha: gist.files[GIST_FILE].sha
+    };
+
+    await fetch(`https://api.github.com/gists/${cfg.gistId}`, {
+      method: 'PATCH',
+      headers: ghHeaders(),
+      body: JSON.stringify({ files })
+    });
+    showMsg('dangerMsg', 'success', '✅ 投票数据已清空');
+  } catch(e) {
+    showMsg('dangerMsg', 'error', `❌ 操作失败：${e.message}`);
+  }
+}
+
+function resetVoted() {
+  localStorage.removeItem('annual_party_voted_2026');
+  showMsg('dangerMsg', 'success', '✅ 本机投票限制已解除');
+}
+
+function showMsg(id, type, text) {
+  const el = document.getElementById(id);
+  el.className = 'msg ' + type;
+  el.textContent = text;
+  setTimeout(() => { el.className = 'msg'; }, 5000);
+}
+
+function initPage() {
+  const cfg = getConfig();
+  if (cfg.token) document.getElementById('cfgToken').value = cfg.token;
+  if (cfg.gistId) document.getElementById('cfgGistId').value = cfg.gistId;
+  renderProgramItems();
+}
+</script>
+</body>
+</html>

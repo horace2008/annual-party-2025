@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>年会节目排行榜</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Microsoft YaHei', sans-serif;
+      background: #0a0a1a;
+      min-height: 100vh;
+      color: #fff;
+      overflow-x: hidden;
+    }
+
+    .stars-bg {
+      position: fixed; inset: 0;
+      background:
+        radial-gradient(ellipse at 20% 50%, rgba(233,69,96,0.15) 0%, transparent 50%),
+        radial-gradient(ellipse at 80% 20%, rgba(255,215,0,0.1) 0%, transparent 50%),
+        radial-gradient(ellipse at 60% 80%, rgba(15,52,96,0.5) 0%, transparent 50%);
+      pointer-events: none;
+    }
+
+    .container { position: relative; z-index: 1; padding: 0 20px 30px; max-width: 900px; margin: 0 auto; }
+
+    .top-header {
+      text-align: center;
+      padding: 30px 0 20px;
+    }
+    .top-header .title-emoji { font-size: 52px; display: block; }
+    .top-header h1 {
+      font-size: clamp(24px, 5vw, 42px);
+      font-weight: 900;
+      letter-spacing: 4px;
+      color: #FFD700;
+      text-shadow: 0 0 30px rgba(255,215,0,0.7), 0 0 60px rgba(255,215,0,0.3);
+      margin-top: 8px;
+    }
+    .subtitle { font-size: 14px; color: rgba(255,255,255,0.4); margin-top: 6px; letter-spacing: 2px; }
+
+    .stats-bar {
+      display: flex;
+      gap: 12px;
+      margin-bottom: 24px;
+      justify-content: center;
+    }
+    .stat-item {
+      background: rgba(255,255,255,0.06);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 12px;
+      padding: 12px 20px;
+      text-align: center;
+    }
+    .stat-num { font-size: 26px; font-weight: 700; color: #FFD700; }
+    .stat-label { font-size: 12px; color: rgba(255,255,255,0.4); margin-top: 2px; }
+
+    .rank-list { display: flex; flex-direction: column; gap: 14px; }
+
+    .rank-card {
+      background: rgba(255,255,255,0.05);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 18px;
+      padding: 16px 20px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      transition: all 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+      position: relative;
+      overflow: hidden;
+    }
+    .rank-card::before {
+      content: '';
+      position: absolute;
+      left: 0; top: 0; bottom: 0;
+      width: 4px;
+      border-radius: 4px 0 0 4px;
+      background: rgba(255,255,255,0.2);
+    }
+    .rank-card.rank-1 { background: rgba(255,215,0,0.1); border-color: rgba(255,215,0,0.4); }
+    .rank-card.rank-1::before { background: linear-gradient(to bottom, #FFD700, #FFA500); }
+    .rank-card.rank-2 { background: rgba(192,192,192,0.08); border-color: rgba(192,192,192,0.3); }
+    .rank-card.rank-2::before { background: linear-gradient(to bottom, #C0C0C0, #A0A0A0); }
+    .rank-card.rank-3 { background: rgba(205,127,50,0.08); border-color: rgba(205,127,50,0.3); }
+    .rank-card.rank-3::before { background: linear-gradient(to bottom, #CD7F32, #A05C20); }
+
+    .rank-num { font-size: 28px; font-weight: 900; min-width: 44px; text-align: center; }
+    .rank-card.rank-1 .rank-num { color: #FFD700; text-shadow: 0 0 20px rgba(255,215,0,0.8); }
+    .rank-card.rank-2 .rank-num { color: #C0C0C0; }
+    .rank-card.rank-3 .rank-num { color: #CD7F32; }
+
+    .rank-info { flex: 1; min-width: 0; }
+    .rank-name { font-size: clamp(16px, 3vw, 22px); font-weight: 700; }
+    .rank-type { font-size: 12px; color: rgba(255,255,255,0.45); margin-top: 3px; }
+
+    .rank-right { text-align: right; }
+    .score-big {
+      font-size: clamp(28px, 5vw, 40px);
+      font-weight: 900;
+      color: #FFD700;
+      line-height: 1;
+    }
+    .rank-card.rank-2 .score-big { color: #C0C0C0; }
+    .rank-card.rank-3 .score-big { color: #CD7F32; }
+    .score-unit { font-size: 14px; color: rgba(255,255,255,0.4); }
+    .vote-count { font-size: 12px; color: rgba(255,255,255,0.35); margin-top: 4px; }
+
+    .progress-wrap {
+      margin-top: 10px;
+      background: rgba(255,255,255,0.08);
+      border-radius: 4px;
+      height: 6px;
+      overflow: hidden;
+    }
+    .progress-bar {
+      height: 100%;
+      border-radius: 4px;
+      background: linear-gradient(90deg, #FFD700, #FFA500);
+      transition: width 1s ease;
+    }
+    .rank-card.rank-2 .progress-bar { background: linear-gradient(90deg, #C0C0C0, #909090); }
+    .rank-card.rank-3 .progress-bar { background: linear-gradient(90deg, #CD7F32, #A05C20); }
+
+    .qr-section {
+      margin-top: 30px;
+      text-align: center;
+      padding: 24px;
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 18px;
+    }
+    .qr-section h3 { color: #FFD700; margin-bottom: 14px; font-size: 16px; }
+    #qrcode { display: inline-block; background: white; padding: 12px; border-radius: 12px; }
+    .qr-url { font-size: 12px; color: rgba(255,255,255,0.4); margin-top: 10px; word-break: break-all; }
+
+    .refresh-hint {
+      text-align: center;
+      font-size: 12px;
+      color: rgba(255,255,255,0.25);
+      margin-top: 20px;
+      padding-bottom: 10px;
+    }
+    .refresh-dot {
+      display: inline-block;
+      width: 8px; height: 8px;
+      background: #4CAF50;
+      border-radius: 50%;
+      margin-right: 6px;
+      animation: pulse 2s infinite;
+    }
+    @keyframes pulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.5; transform: scale(0.8); }
+    }
+
+    .empty-state {
+      text-align: center;
+      padding: 60px 20px;
+      color: rgba(255,255,255,0.3);
+      font-size: 16px;
+    }
+    .empty-state .emoji { font-size: 48px; display: block; margin-bottom: 12px; }
+
+    .admin-link {
+      position: fixed;
+      bottom: 16px; right: 16px;
+      background: rgba(255,255,255,0.1);
+      border: 1px solid rgba(255,255,255,0.15);
+      color: rgba(255,255,255,0.4);
+      text-decoration: none;
+      padding: 8px 14px;
+      border-radius: 8px;
+      font-size: 12px;
+    }
+  </style>
+</head>
+<body>
+
+<div class="stars-bg"></div>
+
+<div class="container">
+  <div class="top-header">
+    <span class="title-emoji">🏆</span>
+    <h1>年会节目排行榜</h1>
+    <div class="subtitle">ANNUAL PARTY · 实时排名</div>
+  </div>
+
+  <div class="stats-bar">
+    <div class="stat-item">
+      <div class="stat-num" id="totalVotes">0</div>
+      <div class="stat-label">总投票人次</div>
+    </div>
+    <div class="stat-item">
+      <div class="stat-num" id="programCount">0</div>
+      <div class="stat-label">参赛节目</div>
+    </div>
+    <div class="stat-item">
+      <div class="stat-num" id="lastUpdate">--</div>
+      <div class="stat-label">最近更新</div>
+    </div>
+  </div>
+
+  <div class="rank-list" id="rankList">
+    <div class="empty-state">
+      <span class="emoji">⏳</span>
+      <span>加载中...</span>
+    </div>
+  </div>
+
+  <div class="qr-section">
+    <h3>📱 扫码参与投票</h3>
+    <div id="qrcode"></div>
+    <div class="qr-url" id="voteUrl"></div>
+  </div>
+
+  <div class="refresh-hint">
+    <span class="refresh-dot"></span>每 10 秒自动刷新
+  </div>
+</div>
+
+<a href="admin.html" class="admin-link">⚙️ 管理</a>
+
+<script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
+
+<script>
+const GIST_ID   = localStorage.getItem('gist_id')     || '';
+const GITHUB_TOKEN = localStorage.getItem('github_token') || '';
+const GIST_FILE = 'annual-party-data.json';
+const GIST_API_URL = `https://api.github.com/gists/${GIST_ID}`;
+
+function ghHeaders() {
+  return {
+    'Accept': 'application/vnd.github+json',
+    'Authorization': `Bearer ${GITHUB_TOKEN}`,
+    'X-GitHub-Api-Version': '2022-11-28'
+  };
+}
+
+async function loadData() {
+  if (!GIST_ID || !GITHUB_TOKEN) return null;
+  try {
+    const res = await fetch(GIST_API_URL, { headers: ghHeaders() });
+    if (!res.ok) throw new Error('network');
+    const gist = await res.json();
+    return JSON.parse(gist.files[GIST_FILE]?.content || '{}');
+  } catch(e) {
+    const local = localStorage.getItem('annual_party_data');
+    return local ? JSON.parse(local) : null;
+  }
+}
+
+function getRankEmoji(rank) {
+  return ['🥇', '🥈', '🥉'][rank - 1] || rank;
+}
+
+function renderBoard(data) {
+  if (!data || !data.programs) {
+    document.getElementById('rankList').innerHTML = `
+      <div class="empty-state">
+        <span class="emoji">📝</span>
+        <span>暂无数据，请先在管理页面配置节目</span>
+      </div>`;
+    return;
+  }
+
+  const programs = data.programs;
+  const scores = data.scores || {};
+
+  const ranked = programs.map(p => {
+    const s = scores[p.id] || { total: 0, count: 0 };
+    return {
+      ...p,
+      avg: s.count > 0 ? (s.total / s.count) : 0,
+      count: s.count
+    };
+  }).sort((a, b) => b.avg - a.avg);
+
+  const maxAvg = ranked.length > 0 ? ranked[0].avg : 10;
+  const totalVotes = ranked.reduce((sum, p) => sum + p.count, 0);
+
+  document.getElementById('totalVotes').textContent = totalVotes;
+  document.getElementById('programCount').textContent = programs.length;
+  document.getElementById('lastUpdate').textContent = new Date().toLocaleTimeString('zh', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+
+  const container = document.getElementById('rankList');
+  if (ranked.length === 0) {
+    container.innerHTML = '<div class="empty-state"><span class="emoji">⏳</span><span>暂无投票数据</span></div>';
+    return;
+  }
+
+  container.innerHTML = ranked.map((p, i) => {
+    const rank = i + 1;
+    const rankClass = rank <= 3 ? `rank-${rank}` : '';
+    const avgDisplay = p.avg.toFixed(2);
+    const pct = maxAvg > 0 ? (p.avg / 10 * 100).toFixed(1) : 0;
+    return `
+      <div class="rank-card ${rankClass}">
+        <div class="rank-num">${getRankEmoji(rank)}</div>
+        <div class="rank-info">
+          <div class="rank-name">${p.name}</div>
+          <div class="rank-type">${p.type}</div>
+          <div class="progress-wrap">
+            <div class="progress-bar" style="width: ${pct}%"></div>
+          </div>
+        </div>
+        <div class="rank-right">
+          <div class="score-big">${p.count > 0 ? avgDisplay : '--'}</div>
+          <div class="score-unit">平均分</div>
+          <div class="vote-count">${p.count} 票</div>
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+function generateQR() {
+  const url = window.location.origin + window.location.pathname.replace('board.html', 'index.html');
+  document.getElementById('voteUrl').textContent = url;
+  try {
+    new QRCode(document.getElementById('qrcode'), {
+      text: url,
+      width: 160, height: 160,
+      colorDark: '#000000',
+      colorLight: '#ffffff',
+      correctLevel: QRCode.CorrectLevel.H
+    });
+  } catch(e) {}
+}
+
+async function refresh() {
+  const data = await loadData();
+  renderBoard(data);
+}
+
+generateQR();
+refresh();
+setInterval(refresh, 10000);
+</script>
+</body>
+</html>

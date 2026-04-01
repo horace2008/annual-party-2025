@@ -247,7 +247,7 @@ function checkPwd() {
   const val = document.getElementById('pwdInput').value;
   if (val === ADMIN_PWD) {
     document.getElementById('loginOverlay').style.display = 'none';
-    initPage();
+    initPage(); // async，自动从 Gist 加载节目列表
   } else {
     document.getElementById('loginErr').textContent = '密码错误，请重试';
     document.getElementById('pwdInput').value = '';
@@ -494,10 +494,29 @@ function showMsg(id, type, text) {
   setTimeout(() => { el.className = 'msg'; }, 5000);
 }
 
-function initPage() {
+async function initPage() {
   const cfg = getConfig();
   if (cfg.token) document.getElementById('cfgToken').value = cfg.token;
   if (cfg.gistId) document.getElementById('cfgGistId').value = cfg.gistId;
+
+  // 如果有配置，自动从 Gist 加载最新节目列表
+  if (cfg.token && cfg.gistId) {
+    try {
+      const res = await fetch(`https://api.github.com/gists/${cfg.gistId}`, {
+        headers: ghHeaders()
+      });
+      if (res.ok) {
+        const gist = await res.json();
+        const content = gist.files[GIST_FILE]?.content;
+        if (content) {
+          const data = JSON.parse(content);
+          if (data.programs && data.programs.length > 0) {
+            programList = data.programs;
+          }
+        }
+      }
+    } catch(e) {}
+  }
   renderProgramItems();
 }
 </script>

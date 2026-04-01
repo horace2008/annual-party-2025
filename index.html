@@ -189,11 +189,15 @@
 
 <script>
 // ==================== 配置区 ====================
-// GitHub Gist 配置（管理员在 admin.html 设置后自动存入 localStorage）
-const GIST_ID   = localStorage.getItem('gist_id')     || '';
-const GITHUB_TOKEN = localStorage.getItem('github_token') || '';
+// GitHub Token 和 Gist ID（已配置）
+const HARDCODED_TOKEN = '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';
+const HARDCODED_GIST_ID = '225f0d64f50fe1f4b5d5c69b6017fd226';
 const GIST_FILE = 'annual-party-data.json';
-const GIST_API_URL = `https://api.github.com/gists/${GIST_ID}`;
+
+// 自动读取：优先用硬编码值，找不到才用 localStorage（admin.html 设置的）
+const GIST_ID       = HARDCODED_GIST_ID || localStorage.getItem('gist_id') || '';
+const GITHUB_TOKEN  = HARDCODED_TOKEN  || localStorage.getItem('github_token') || '';
+const GIST_API_URL  = `https://api.github.com/gists/${GIST_ID}`;
 
 // 默认节目（无网络时备用）
 const DEFAULT_PROGRAMS = [

@@ -221,13 +221,19 @@
 
 <a href="admin.html" class="admin-link">⚙️ 管理</a>
 
+
 <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
 
 <script>
-const GIST_ID   = localStorage.getItem('gist_id')     || '';
-const GITHUB_TOKEN = localStorage.getItem('github_token') || '';
+// ==================== 配置区 ====================
+// GitHub Token 和 Gist ID（已配置）
+const HARDCODED_TOKEN  = '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';
+const HARDCODED_GIST_ID = '225f0d64f50fe1f4b5d5c69b6017fd226';
 const GIST_FILE = 'annual-party-data.json';
+const GIST_ID      = HARDCODED_GIST_ID || localStorage.getItem('gist_id') || '';
+const GITHUB_TOKEN = HARDCODED_TOKEN  || localStorage.getItem('github_token') || '';
 const GIST_API_URL = `https://api.github.com/gists/${GIST_ID}`;
+// =============================================
 
 function ghHeaders() {
   return {

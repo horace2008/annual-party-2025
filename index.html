@@ -189,15 +189,16 @@
 
 <script>
 // ==================== 配置区 ====================
-// GitHub Token 和 Gist ID（已配置）
-const HARDCODED_TOKEN = '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';
-const HARDCODED_GIST_ID = '225f0d64f50fe1f4b5d5c69b6017fd226';
+// ⚠️ 公开 Gist（无需 Token 读取）
+const GIST_USER = 'horace';
+const GIST_ID   = '225f0d64f50fe1f4b5d5c69b6017fd226';
 const GIST_FILE = 'annual-party-data.json';
-
-// 自动读取：优先用硬编码值，找不到才用 localStorage（admin.html 设置的）
-const GIST_ID       = HARDCODED_GIST_ID || localStorage.getItem('gist_id') || '';
-const GITHUB_TOKEN  = HARDCODED_TOKEN  || localStorage.getItem('github_token') || '';
-const GIST_API_URL  = `https://api.github.com/gists/${GIST_ID}`;
+// 公开读取用 raw URL（手机/企业微信可直接访问）
+const GIST_RAW_URL = `https://gist.githubusercontent.com/${GIST_USER}/${GIST_ID}/raw/${GIST_FILE}`;
+// 写入用 API（Token 从 admin.html 设置后存在 localStorage）
+const GIST_API_URL = `https://api.github.com/gists/${GIST_ID}`;
+const GITHUB_TOKEN = localStorage.getItem('github_token') || '';
+const GIST_ID_LS    = localStorage.getItem('gist_id') || '';
 
 // 默认节目（无网络时备用）
 const DEFAULT_PROGRAMS = [
@@ -221,31 +222,33 @@ function ghHeaders(extra) {
 }
 
 async function loadData() {
-  if (!GIST_ID || !GITHUB_TOKEN) return null;
+  // 优先用公开 raw URL（无需 Token，手机可直接访问）
   try {
-    const res = await fetch(GIST_API_URL, {
-      headers: ghHeaders()
-    });
-    if (!res.ok) throw new Error('network');
-    const gist = await res.json();
-    return JSON.parse(gist.files[GIST_FILE]?.content || '{}');
-  } catch(e) {
-    const local = localStorage.getItem('annual_party_data');
-    return local ? JSON.parse(local) : null;
-  }
+    const res = await fetch(GIST_RAW_URL + '?t=' + Date.now());
+    if (res.ok) {
+      const text = await res.text();
+      return JSON.parse(text);
+    }
+  } catch(e) {}
+  // 备用：从 localStorage 读取
+  const local = localStorage.getItem('annual_party_data');
+  return local ? JSON.parse(local) : null;
 }
 
 async function saveData(data) {
-  if (!GIST_ID || !GITHUB_TOKEN) return;
+  if (!GITHUB_TOKEN) {
+    // 没有 Token 时存入本地
+    localStorage.setItem('annual_party_data', JSON.stringify(data));
+    return;
+  }
   try {
     const res = await fetch(GIST_API_URL, { headers: ghHeaders() });
+    if (!res.ok) throw new Error();
     const gist = await res.json();
     const sha = gist.files[GIST_FILE]?.sha || null;
-
     const files = {};
     files[GIST_FILE] = { content: JSON.stringify(data, null, 2) };
     if (sha) files[GIST_FILE].sha = sha;
-
     const patchRes = await fetch(GIST_API_URL, {
       method: 'PATCH',
       headers: ghHeaders({ 'Content-Type': 'application/json' }),

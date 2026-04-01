@@ -222,16 +222,19 @@
 <a href="admin.html" class="admin-link">⚙️ 管理</a>
 
 
+
 <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
 
 <script>
 // ==================== 配置区 ====================
-// GitHub Token 和 Gist ID（已配置）
-const HARDCODED_TOKEN  = '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';
-const HARDCODED_GIST_ID = '225f0d64f50fe1f4b5d5c69b6017fd226';
+// 公开 Gist（无需 Token 读取）
+const GIST_USER = 'horace';
+const GIST_ID   = '225f0d64f50fe1f4b5d5c69b6017fd226';
 const GIST_FILE = 'annual-party-data.json';
-const GIST_ID      = HARDCODED_GIST_ID || localStorage.getItem('gist_id') || '';
-const GITHUB_TOKEN = HARDCODED_TOKEN  || localStorage.getItem('github_token') || '';
+// 公开读取用 raw URL（手机可直接访问）
+const GIST_RAW_URL = `https://gist.githubusercontent.com/${GIST_USER}/${GIST_ID}/raw/${GIST_FILE}`;
+// Token 从 admin.html 设置后存入 localStorage
+const GITHUB_TOKEN = localStorage.getItem('github_token') || '';
 const GIST_API_URL = `https://api.github.com/gists/${GIST_ID}`;
 // =============================================
 
@@ -244,16 +247,17 @@ function ghHeaders() {
 }
 
 async function loadData() {
-  if (!GIST_ID || !GITHUB_TOKEN) return null;
+  // 优先用公开 raw URL（无需 Token）
   try {
-    const res = await fetch(GIST_API_URL, { headers: ghHeaders() });
-    if (!res.ok) throw new Error('network');
-    const gist = await res.json();
-    return JSON.parse(gist.files[GIST_FILE]?.content || '{}');
-  } catch(e) {
-    const local = localStorage.getItem('annual_party_data');
-    return local ? JSON.parse(local) : null;
-  }
+    const res = await fetch(GIST_RAW_URL + '?t=' + Date.now());
+    if (res.ok) {
+      const text = await res.text();
+      return JSON.parse(text);
+    }
+  } catch(e) {}
+  // 备用：从 localStorage
+  const local = localStorage.getItem('annual_party_data');
+  return local ? JSON.parse(local) : null;
 }
 
 function getRankEmoji(rank) {
